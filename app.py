@@ -7,11 +7,12 @@ from clc.langchain_application import LangChainApplication
 
 # 修改成自己的配置！！！
 class LangChainCFG:
-    llm_model_name = 'THUDM/chatglm-6b-int4-qe'  # 本地模型文件 or huggingface远程仓库
+    llm_model_name = 'THUDM/chatglm2-6b-int4'  # 本地模型文件 or huggingface远程仓库
     embedding_model_name = 'GanymedeNil/text2vec-large-chinese'  # 检索模型文件 or huggingface远程仓库
     vector_store_path = './cache'
     docs_path = './docs'
     kg_vector_stores = {
+        'emotion': './cache/emotion',
         '中文维基百科': './cache/zh_wikipedia',
         '大规模金融研报': './cache/financial_research_reports',
         '初始化': './cache',

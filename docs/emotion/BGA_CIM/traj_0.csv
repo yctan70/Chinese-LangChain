@@ -1,0 +1,15 @@
+key,value
+joint_mask,1 2 3
+coordinates,X Y Z
+kinematics,XYZ
+linear_units,mm
+angular_units,degree
+default_velocity,100.0
+max_velocity,1200.0
+default_accel,14400.0
+robot_module,XYZ
+traj_origin,
+length,300
+manual_speed,7
+max_jerk,0.12
+jerk_ratio,1.0

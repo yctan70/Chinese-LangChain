@@ -16,11 +16,38 @@ from langchain.document_loaders import UnstructuredFileLoader
 from langchain.embeddings.huggingface import HuggingFaceEmbeddings
 from langchain.vectorstores import FAISS
 from tqdm import tqdm
-# 中文Wikipedia数据导入示例：
-embedding_model_name = '/root/pretrained_models/text2vec-large-chinese'
-docs_path = '/root/GoMall/Knowledge-ChatGLM/cache/financial_research_reports'
-embeddings = HuggingFaceEmbeddings(model_name=embedding_model_name)
+from clc.langchain_application import LangChainApplication
+import glob
 
+from clc.source_service import SourceService
+
+
+class LangChainCFG:
+    llm_model_name = 'THUDM/chatglm2-6b-int4'  # 本地模型文件 or huggingface远程仓库
+    embedding_model_name = 'GanymedeNil/text2vec-large-chinese'  # 检索模型文件 or huggingface远程仓库
+    vector_store_path = './cache'
+    docs_path = './docs/emotion'
+    kg_vector_stores = {
+        'emotion': './cache/emotion',
+        '中文维基百科': './cache/zh_wikipedia',
+        '大规模金融研报': './cache/financial_research_reports',
+        '初始化': './cache',
+    }  # 可以替换成自己的知识库，如果没有需要设置为None
+    # kg_vector_stores=None
+    patterns = ['模型问答', '知识库问答']  #
+    n_gpus = 1
+
+
+LOADER_MAPPING = [".csv", ".pdf", ".pac", ".hal", ".ini"]
+config = LangChainCFG()
+source_service = SourceService(config)
+
+all_files = []
+for ext in LOADER_MAPPING:
+    all_files.extend(
+        glob.glob(os.path.join(config.docs_path, f"**/*{ext}"), recursive=True)
+    )
+source_service.init_source_vector(all_files)
 
 # Wikipedia数据处理
 
@@ -35,7 +62,6 @@ embeddings = HuggingFaceEmbeddings(model_name=embedding_model_name)
 # vector_store.save_local('cache/zh_wikipedia/')
 
 
-
 # docs = []
 #
 # with open('cache/zh_wikipedia/wiki.zh-sim-cleaned.txt', 'r', encoding='utf-8') as f:
@@ -48,20 +74,19 @@ embeddings = HuggingFaceEmbeddings(model_name=embedding_model_name)
 
 
 # 金融研报数据处理
-docs = []
-
-for doc in tqdm(os.listdir(docs_path)):
-    if doc.endswith('.txt'):
-        # print(doc)
-        # loader = UnstructuredFileLoader(f'{docs_path}/{doc}', mode="elements")
-        # doc = loader.load()
-        f=open(f'{docs_path}/{doc}','r',encoding='utf-8')
-
-        # docs.extend(doc)
-        docs.append(Document(page_content=''.join(f.read().split()), metadata={"source": f'doc_id_{doc}'}))
-vector_store = FAISS.from_documents(docs, embeddings)
-vector_store.save_local('cache/financial_research_reports')
-
+# docs = []
+#
+# for doc in tqdm(os.listdir(docs_path)):
+#     if doc.endswith('.txt'):
+#         # print(doc)
+#         # loader = UnstructuredFileLoader(f'{docs_path}/{doc}', mode="elements")
+#         # doc = loader.load()
+#         f = open(f'{docs_path}/{doc}', 'r', encoding='utf-8')
+#
+#         # docs.extend(doc)
+#         docs.append(Document(page_content=''.join(f.read().split()), metadata={"source": f'doc_id_{doc}'}))
+# vector_store = FAISS.from_documents(docs, embeddings)
+# vector_store.save_local('cache/financial_research_reports')
 
 # # 英雄联盟
 #

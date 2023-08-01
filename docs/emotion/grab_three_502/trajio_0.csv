@@ -1,0 +1,9 @@
+key,value
+alarm_in0,10
+alarm_in1,11
+alarm_in2,12
+runstop_in,-1
+singletonstatus_out,-1
+alarm_in3,13
+safe_area_out,-1
+safe_area_switch,0

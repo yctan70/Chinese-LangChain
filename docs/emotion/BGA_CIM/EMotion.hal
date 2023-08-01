@@ -1,0 +1,113 @@
+#loadusr hal_readsv com=3,4 mask=7,56
+#loadusr hal_readsanyo com=1 mask=7
+
+#loadrt [emotion]emcmot base_period_nsec=[emotion]base_period servo_period_nsec=[emotion]servo_period traj_period_nsec=[emotion]servo_period key=[emotion]shmem_key num_joints=[system]axes offline=[emotion]offline num_input=[system]input num_output=[system]output  joint_mask=7,56 kine_type=1,1
+loadrt [emotion]emcmot base_period_nsec=[emotion]base_period servo_period_nsec=[emotion]servo_period traj_period_nsec=[emotion]servo_period key=[emotion]shmem_key num_joints=[system]axes offline=0 num_input=[system]input num_output=[system]output  joint_mask=7 kine_type=1
+# stepper module, three step generators, all three using step/dir
+#loadrt rb_stepgen step_type=1,1,1,1,1,1
+loadrt advan_ddagen_sim dda_type=1,1,1
+
+#loadrt hal_sec2 cfg="0 0"
+#addf ecdrive.update2 servo-thread
+
+# hook functions to base thread (high speed thread for step generation)
+addf advan_ddagen.make-pulses servo-thread
+
+# hook functions to servo thread
+#addf advan_ddagen.capture-position servo-thread
+#addf advan_ddagen.update-freq servo-thread
+
+addf motion-command-handler servo-thread
+addf motion-controller servo-thread
+
+loadrt threads name1=slow-thread period1=5000000
+#loadrt hal_rio_ser Port=2 In=32 Out=24 Baudrate=115200 Debug=0 Interrupt=1
+#loadrt hal_rio_ser Port=2 In=48 Out=48 Baudrate=115200 Debug=0 Interrupt=1
+#addf rio.polling slow-thread
+
+#net sv_encoder1 motion.readComPort.ch_data0 readsv.0.encoder
+#net sv_encoder2 motion.readComPort.ch_data1 readsv.1.encoder
+#net sv_encoder3 motion.readComPort.ch_data2 readsv.2.encoder
+
+#net drv_com_flag0 motion.ComPort.DataFlag0 readsv.pin-flag0
+#net drv_com_flag1 motion.ComPort.DataFlag1 readsv.pin-flag1
+#net drv_com_enable motion.ComPort.Enable readsv.pin-enable
+
+# connect position commands from motion module to step generator
+net X0pos-cmd axis.0.motor-pos-cmd => advan_ddagen.0.position-cmd
+net Y0pos-cmd axis.1.motor-pos-cmd => advan_ddagen.1.position-cmd
+net Z0pos-cmd axis.2.motor-pos-cmd => advan_ddagen.2.position-cmd
+
+# connect position feedback from step generators
+# to motion module
+net X0pos-fb advan_ddagen.0.position-fb => axis.0.motor-pos-fb
+net Y0pos-fb advan_ddagen.1.position-fb => axis.1.motor-pos-fb
+net Z0pos-fb advan_ddagen.2.position-fb => axis.2.motor-pos-fb
+
+
+# connect enable signals for step generators
+net X0en axis.0.amp-enable-out => advan_ddagen.0.enable
+net Y0en axis.1.amp-enable-out => advan_ddagen.1.enable
+net Z0en axis.2.amp-enable-out => advan_ddagen.2.enable
+
+
+net reset0 axis.0.amp-reset-out => advan_ddagen.0.reset
+net reset1 axis.1.amp-reset-out => advan_ddagen.1.reset
+net reset2 axis.2.amp-reset-out => advan_ddagen.2.reset
+
+
+net resetDone0 axis.0.amp-resetDone-in <= advan_ddagen.0.resetDone
+net resetDone1 axis.1.amp-resetDone-in <= advan_ddagen.1.resetDone
+net resetDone2 axis.2.amp-resetDone-in <= advan_ddagen.2.resetDone
+
+
+#unlinkp rio.bit08.out
+#net X0en => rio.bit08.out
+#unlinkp rio.bit09.out
+#net X1en => rio.bit09.out
+
+
+#unlinkp rio.bit08.out
+#net X0en => rio.bit08.out
+#unlinkp rio.bit09.out
+#net Y0en => rio.bit09.out
+#unlinkp rio.bit10.out
+#net Z0en => rio.bit10.out
+
+#unlinkp rio.bit11.out
+#net X1en => rio.bit11.out
+#unlinkp rio.bit12.out
+#net Y1en => rio.bit12.out
+#unlinkp rio.bit13.out
+#net Z1en => rio.bit13.out
+
+# set advan_ddagen module scaling - get values from ini file
+setp advan_ddagen.0.position-scale [axis_0]scale
+setp advan_ddagen.1.position-scale [axis_1]scale
+setp advan_ddagen.2.position-scale [axis_2]scale
+
+#setp advan_ddagen.0.cal-enc [axis_0]enc_cal
+#setp advan_ddagen.1.cal-enc [axis_1]enc_cal
+#setp advan_ddagen.2.cal-enc [axis_2]enc_cal
+#setp advan_ddagen.3.cal-enc [axis_3]enc_cal
+#setp advan_ddagen.4.cal-enc [axis_4]enc_cal
+#setp advan_ddagen.5.cal-enc [axis_5]enc_cal
+
+net com.in16 => axis.0.home-sw-in
+net com.in17 => axis.1.home-sw-in
+net com.in18 => axis.2.home-sw-in
+
+#loadrt not count=1
+#addf not.0 servo-thread
+#net com.in27 => not.0.in 
+#net home4 not.0.out => axis.3.home-sw-in
+
+linksp com.in06 input.estop
+#unlinkp rio.bit06.in
+#net com.in06  advan_ddagen.in.01
+
+net estop-out <= iocontrol.0.user-enable-out
+net estop-out => iocontrol.0.emc-enable-in
+
+setp armLeftkins.dh_angle [dhparam_0]dh_angleXY
+#setp armRightkins.dh_angle [dhparam_1]dh_angleXY

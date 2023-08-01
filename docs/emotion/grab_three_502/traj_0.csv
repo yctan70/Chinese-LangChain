@@ -1,0 +1,16 @@
+key,value
+joint_mask,1 2 3 4
+coordinates,X Y Z C
+kinematics,S600
+linear_units,mm
+angular_units,degree
+default_velocity,100.0
+max_velocity,1200.0
+default_accel,18000
+robot_module,S600
+traj_origin,
+length,300
+manual_speed,22
+max_jerk,0.1
+jerk_ratio,1.0
+kinematics_type,4

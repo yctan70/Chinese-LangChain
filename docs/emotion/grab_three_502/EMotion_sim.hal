@@ -1,0 +1,72 @@
+loadrt [emotion]emcmot base_period_nsec=[emotion]base_period servo_period_nsec=[emotion]servo_period traj_period_nsec=[emotion]servo_period key=[emotion]shmem_key num_joints=[system]axes offline=[emotion]offline num_input=[system]input num_output=[system]output joint_mask=15 kine_type=6 use_pdf=[system]use_pdf conveyer_channel=[system]conveyer disable_io=[system]disable_io
+
+loadrt ipch_sim dda_type=[axis_0](dda_type),[axis_1](dda_type),[axis_2](dda_type),[axis_3](dda_type),-1,-1,-1,-1
+
+loadrt threads name1=slow-thread period1=1100000
+addf ipch.make-pulses servo-thread
+addf ipch.make-pulses-slow slow-thread
+addf motion-command-handler servo-thread
+addf motion-controller servo-thread
+addf motion-controller-slow slow-thread
+net slow_thread ipch.use_slow_thread motion.use_slow_thread
+net run_thread motion.run_real_module ipch.run_real_module
+
+linksp com.in06 input.estop
+net estop-out <= iocontrol.0.user-enable-out
+net estop-out => iocontrol.0.emc-enable-in
+setp s600kins.D1 [dhparam_0]dh_0
+setp s600kins.D2 [dhparam_0]dh_1
+setp s600kins.D3 [dhparam_0]dh_2
+setp s600kins.D4 [dhparam_0]dh_3
+setp s600kins.D5 [dhparam_0]dh_4
+setp s600kins.D6 [dhparam_0]dh_5
+setp s600kins.PL1 [axis_0]poslimit
+setp s600kins.NL1 [axis_0]neglimit
+setp s600kins.PL2 [axis_1]poslimit
+setp s600kins.NL2 [axis_1]neglimit
+setp s600kins.PL3 [axis_2]poslimit
+setp s600kins.NL3 [axis_2]neglimit
+setp s600kins.PL4 [axis_3]poslimit
+setp s600kins.NL4 [axis_3]neglimit
+setp s600kins.payload [system]payload
+
+
+net pos-cmd0 axis.0.motor-pos-cmd => ipch.0.position-cmd
+net pos-cmd1 axis.1.motor-pos-cmd => ipch.1.position-cmd
+net pos-cmd2 axis.2.motor-pos-cmd => ipch.2.position-cmd
+net pos-cmd3 axis.3.motor-pos-cmd => ipch.3.position-cmd
+
+net pos-fb0 ipch.0.position-fb => axis.0.motor-pos-fb
+net pos-fb1 ipch.1.position-fb => axis.1.motor-pos-fb
+net pos-fb2 ipch.2.position-fb => axis.2.motor-pos-fb
+net pos-fb3 ipch.3.position-fb => axis.3.motor-pos-fb
+
+net vel-fb0 ipch.0.vel-fb => axis.0.motor-vel-fb
+net vel-fb1 ipch.1.vel-fb => axis.1.motor-vel-fb
+net vel-fb2 ipch.2.vel-fb => axis.2.motor-vel-fb
+net vel-fb3 ipch.3.vel-fb => axis.3.motor-vel-fb
+
+net en0 axis.0.amp-enable-out => ipch.0.enable
+net en1 axis.1.amp-enable-out => ipch.1.enable
+net en2 axis.2.amp-enable-out => ipch.2.enable
+net en3 axis.3.amp-enable-out => ipch.3.enable
+
+net reset0 axis.0.amp-reset-out => ipch.0.reset
+net reset1 axis.1.amp-reset-out => ipch.1.reset
+net reset2 axis.2.amp-reset-out => ipch.2.reset
+net reset3 axis.3.amp-reset-out => ipch.3.reset
+
+net resetDone0 axis.0.amp-resetDone-in <= ipch.0.resetDone
+net resetDone1 axis.1.amp-resetDone-in <= ipch.1.resetDone
+net resetDone2 axis.2.amp-resetDone-in <= ipch.2.resetDone
+net resetDone3 axis.3.amp-resetDone-in <= ipch.3.resetDone
+
+setp ipch.0.position-scale [axis_0]scale
+setp ipch.1.position-scale [axis_1]scale
+setp ipch.2.position-scale [axis_2]scale
+setp ipch.3.position-scale [axis_3]scale
+
+
+
+
+

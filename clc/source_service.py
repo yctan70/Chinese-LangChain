@@ -13,9 +13,19 @@
 import os
 
 from duckduckgo_search import ddg
-from langchain.document_loaders import UnstructuredFileLoader
+from langchain.document_loaders import UnstructuredFileLoader, TextLoader, CSVLoader
 from langchain.embeddings.huggingface import HuggingFaceEmbeddings
 from langchain.vectorstores import FAISS
+from textsplitter import ChineseTextSplitter
+from loader import UnstructuredPaddleImageLoader, UnstructuredPaddlePDFLoader
+from textsplitter.zh_title_enhance import zh_title_enhance
+
+# 文本分句长度
+SENTENCE_SIZE = 100
+# 是否开启中文标题加强，以及标题增强的相关配置
+# 通过增加标题判断，判断哪些文本为标题，并在metadata中进行标记；
+# 然后将文本与往上一级的标题进行拼合，实现文本信息的增强。
+ZH_TITLE_ENHANCE = False
 
 
 class SourceService(object):
@@ -26,18 +36,56 @@ class SourceService(object):
         self.docs_path = self.config.docs_path
         self.vector_store_path = self.config.vector_store_path
 
-    def init_source_vector(self):
+    def write_check_file(self, filepath, docs):
+        folder_path = os.path.join(os.path.dirname(filepath), "tmp_files")
+        if not os.path.exists(folder_path):
+            os.makedirs(folder_path)
+        fp = os.path.join(folder_path, 'load_file.txt')
+        with open(fp, 'a+', encoding='utf-8') as fout:
+            fout.write("filepath=%s,len=%s" % (filepath, len(docs)))
+            fout.write('\n')
+            for i in docs:
+                fout.write(str(i))
+                fout.write('\n')
+            fout.close()
+
+    def load_file(self, file, sentence_size=SENTENCE_SIZE, using_zh_title_enhance=ZH_TITLE_ENHANCE):
+        if file.lower().endswith(".md"):
+            loader = UnstructuredFileLoader(file, mode="elements")
+            doc = loader.load()
+        elif file.lower().endswith(".pac") or file.lower().endswith(".hal") or file.lower().endswith(".ini"):
+            loader = TextLoader(file, autodetect_encoding=True)
+            textsplitter = ChineseTextSplitter(pdf=False, sentence_size=sentence_size)
+            doc = loader.load_and_split(textsplitter)
+        elif file.lower().endswith(".pdf"):
+            loader = UnstructuredPaddlePDFLoader(file)
+            textsplitter = ChineseTextSplitter(pdf=True, sentence_size=sentence_size)
+            doc = loader.load_and_split(textsplitter)
+        elif file.lower().endswith(".jpg") or file.lower().endswith(".png"):
+            loader = UnstructuredPaddleImageLoader(file, mode="elements")
+            textsplitter = ChineseTextSplitter(pdf=False, sentence_size=sentence_size)
+            doc = loader.load_and_split(text_splitter=textsplitter)
+        elif file.lower().endswith(".csv"):
+            loader = CSVLoader(file)
+            doc = loader.load()
+        else:
+            loader = UnstructuredFileLoader(file, mode="elements")
+            textsplitter = ChineseTextSplitter(pdf=False, sentence_size=sentence_size)
+            doc = loader.load_and_split(text_splitter=textsplitter)
+        if using_zh_title_enhance:
+            doc = zh_title_enhance(doc)
+        self.write_check_file(file, doc)
+        return doc
+
+    def init_source_vector(self, filepath: list[str]):
         """
         初始化本地知识库向量
         :return:
         """
         docs = []
-        for doc in os.listdir(self.docs_path):
-            if doc.endswith('.txt'):
-                print(doc)
-                loader = UnstructuredFileLoader(f'{self.docs_path}/{doc}', mode="elements")
-                doc = loader.load()
-                docs.extend(doc)
+        for file in filepath:
+            doc = self.load_file(file)
+            docs.extend(doc)
         self.vector_store = FAISS.from_documents(docs, self.embeddings)
         self.vector_store.save_local(self.vector_store_path)
 

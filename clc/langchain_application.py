@@ -91,12 +91,9 @@ if __name__ == '__main__':
     application = LangChainApplication(config)
 
     application.source_service.init_source_vector()
+    application.source_service.add_document('/content/Chinese-LangChain/docs/added/马保国.txt')
     result = application.get_knowledge_based_answer('马保国是谁')
     print(result)
-
-    # application.source_service.add_document('/home/yctan/PycharmProjects/Chinese-LangChain/docs/added/马保国.txt')
-    # result = application.get_knowledge_based_answer('马保国是谁')
-    # print(result)
 
     # result = application.get_llm_answer('马保国是谁')
     # print(result)

@@ -10,3 +10,11 @@ chardet
 cchardet
 cpm_kernels
 accelerate
+textsplitter
+tqdm
+feedparser
+nltk
+paddleocr
+markdown
+pygments
+pandas

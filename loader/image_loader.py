@@ -6,6 +6,7 @@ from paddleocr import PaddleOCR
 import os
 import nltk
 
+
 class UnstructuredPaddleImageLoader(UnstructuredFileLoader):
     """Loader that uses unstructured to load image files, such as PNGs and JPGs."""
 
@@ -27,16 +28,19 @@ class UnstructuredPaddleImageLoader(UnstructuredFileLoader):
         txt_file_path = image_ocr_txt(self.file_path)
         from unstructured.partition.text import partition_text
         return partition_text(filename=txt_file_path, **self.unstructured_kwargs)
-      
-      
+
+
 if __name__ == "__main__":
     import sys
+
     sys.path.append(os.path.dirname(os.path.dirname(__file__)))
-    
+
     from configs.model_config import NLTK_DATA_PATH
+
     nltk.data.path = [NLTK_DATA_PATH] + nltk.data.path
-    
-    filepath = os.path.join(os.path.dirname(os.path.dirname(__file__)), "knowledge_base", "samples", "content", "test.jpg")
+
+    filepath = os.path.join(os.path.dirname(os.path.dirname(__file__)), "knowledge_base", "samples", "content",
+                            "test.jpg")
     loader = UnstructuredPaddleImageLoader(filepath, mode="elements")
     docs = loader.load()
     for doc in docs:

@@ -25,7 +25,7 @@ from clc.source_service import SourceService
 class LangChainCFG:
     llm_model_name = 'THUDM/chatglm2-6b-int4'  # 本地模型文件 or huggingface远程仓库
     embedding_model_name = 'GanymedeNil/text2vec-large-chinese'  # 检索模型文件 or huggingface远程仓库
-    vector_store_path = './cache'
+    vector_store_path = './cache/emotion'
     docs_path = './docs/emotion'
     kg_vector_stores = {
         'emotion': './cache/emotion',

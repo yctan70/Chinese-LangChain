@@ -14,7 +14,9 @@ textsplitter
 tqdm
 feedparser
 nltk
-paddleocr
 markdown
 pygments
 pandas
+pymupdf
+paddlepaddle==2.4.2
+paddleocr~=2.6.1.3

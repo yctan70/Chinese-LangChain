@@ -89,9 +89,9 @@ def predict(input,
     else:
         resp = application.get_knowledge_based_answer(
             query=input,
-            history_len=1,
+            history_len=5,
             temperature=0.1,
-            top_p=0.9,
+            top_p=0.7,
             top_k=top_k,
             web_content=web_content,
             chat_history=history

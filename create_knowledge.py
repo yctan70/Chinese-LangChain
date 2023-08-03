@@ -41,13 +41,18 @@ class LangChainCFG:
 LOADER_MAPPING = [".csv", ".pdf", ".pac", ".hal", ".ini"]
 config = LangChainCFG()
 source_service = SourceService(config)
+ADD = True
 
-all_files = []
-for ext in LOADER_MAPPING:
-    all_files.extend(
-        glob.glob(os.path.join(config.docs_path, f"**/*{ext}"), recursive=True)
-    )
-source_service.init_source_vector(all_files)
+if ADD:
+    source_service.load_vector_store(config.vector_store_path)
+    source_service.add_document("./docs/emotion/Denso Robot Programmer Manual.pdf")
+else:
+    all_files = []
+    for ext in LOADER_MAPPING:
+        all_files.extend(
+            glob.glob(os.path.join(config.docs_path, f"**/*{ext}"), recursive=True)
+        )
+    source_service.init_source_vector(all_files)
 
 # Wikipedia数据处理
 

@@ -90,8 +90,7 @@ class SourceService(object):
         self.vector_store.save_local(self.vector_store_path)
 
     def add_document(self, document_path):
-        loader = UnstructuredFileLoader(document_path, mode="elements")
-        doc = loader.load()
+        doc = self.load_file(document_path)
         self.vector_store.add_documents(doc)
         self.vector_store.save_local(self.vector_store_path)
 

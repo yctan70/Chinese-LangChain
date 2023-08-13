@@ -15,7 +15,7 @@ import os
 from duckduckgo_search import ddg
 from langchain.document_loaders import UnstructuredFileLoader, TextLoader, CSVLoader
 from langchain.embeddings.huggingface import HuggingFaceEmbeddings
-from langchain.vectorstores import FAISS
+from langchain.vectorstores import FAISS, Chroma
 from textsplitter import ChineseTextSplitter
 from loader import UnstructuredPaddleImageLoader, UnstructuredPaddlePDFLoader
 from textsplitter.zh_title_enhance import zh_title_enhance
@@ -99,6 +99,13 @@ class SourceService(object):
             self.vector_store = FAISS.load_local(self.vector_store_path, self.embeddings)
         else:
             self.vector_store = FAISS.load_local(path, self.embeddings)
+        return self.vector_store
+
+    def load_chroma(self, path):
+        if path is None:
+            self.vector_store = Chroma(persist_directory=self.vector_store_path, embedding_function=self.embeddings)
+        else:
+            self.vector_store = Chroma(persist_directory=path, embedding_function=self.embeddings)
         return self.vector_store
 
     def search_web(self, query):

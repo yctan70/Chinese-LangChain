@@ -66,8 +66,7 @@ class LangChainApplication(object):
 
         knowledge_chain = RetrievalQA.from_llm(
             llm=self.llm_service,
-            retriever=self.source_service.vector_store.as_retriever(
-                search_kwargs={"k": top_k}),
+            retriever=self.source_service.vector_store.as_retriever(search_kwargs={"k": top_k}),
             prompt=prompt)
         knowledge_chain.combine_documents_chain.document_prompt = PromptTemplate(
             input_variables=["page_content"], template="{page_content}")

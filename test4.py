@@ -1,5 +1,7 @@
 #
-# sentence-t5-base-nlpl-code-x-glue + PyPDFLoader + Chroma + ChatOpenAI + ConversationalRetrievalChain
+# sentence-t5-base-nlpl-code-x-glue + PyPDFLoader + Chroma
+# ChatOpenAI + ConversationalRetrievalChain
+# ChatGLM2-6B-int4
 #
 import os
 from langchain import PromptTemplate
@@ -16,10 +18,10 @@ from clc.langchain_application import LangChainApplication
 class LangChainCFG:
     llm_model_name = 'THUDM/chatglm2-6b-int4'  # 本地模型文件 or huggingface远程仓库
     embedding_model_name = 'krlvi/sentence-t5-base-nlpl-code-x-glue'  # 检索模型文件 or huggingface远程仓库
-    vector_store_path = './cache/emotion4'
+    vector_store_path = '/content/drive/MyDrive/cache/emotion4'
     docs_path = './docs'
     kg_vector_stores = {
-        'emotion': './cache/emotion4',
+        'emotion': '/content/drive/MyDrive/cache/emotion4',
         '中文维基百科': '/content/drive/MyDrive/cache/zh_wikipedia',
         '大规模金融研报': '/content/drive/MyDrive/cache/financial_research_reports',
         '初始化': '/content/drive/MyDrive/cache/cache',
@@ -103,7 +105,7 @@ def chat():
     for question in questions:
         resp = app.get_knowledge_based_answer(
             query=question,
-            history_len=5,
+            history_len=1,
             temperature=0.1,
             top_p=0.7,
             top_k=4,

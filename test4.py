@@ -11,17 +11,19 @@ from langchain.document_loaders import PyPDFLoader
 from langchain.text_splitter import CharacterTextSplitter
 from langchain.vectorstores import Chroma
 from langchain.embeddings import HuggingFaceEmbeddings
+from langchain.llms import ChatGLM
 
 from clc.langchain_application import LangChainApplication
+from clc.source_service import SourceService
 
 
 class LangChainCFG:
     llm_model_name = 'THUDM/chatglm2-6b-int4'  # 本地模型文件 or huggingface远程仓库
     embedding_model_name = 'krlvi/sentence-t5-base-nlpl-code-x-glue'  # 检索模型文件 or huggingface远程仓库
-    vector_store_path = '/content/drive/MyDrive/cache/emotion4'
+    vector_store_path = './cache/emotion4'
     docs_path = './docs'
     kg_vector_stores = {
-        'emotion': '/content/drive/MyDrive/cache/emotion4',
+        'emotion': './cache/emotion4',
         '中文维基百科': '/content/drive/MyDrive/cache/zh_wikipedia',
         '大规模金融研报': '/content/drive/MyDrive/cache/financial_research_reports',
         '初始化': '/content/drive/MyDrive/cache/cache',
@@ -32,7 +34,6 @@ class LangChainCFG:
 
 
 config = LangChainCFG()
-app = LangChainApplication(config)
 
 questions = [
     "What are the data types in PAC robot language?",
@@ -66,7 +67,7 @@ def ingest():
     vectordb.persist()
 
 
-def conversation():
+def openai_chat():
     prompt_template = """Use the following pieces of context to answer the question at the end.
     If you don't know the answer, just say that you don't know, don't try to
     make up an answer.
@@ -76,7 +77,8 @@ def conversation():
     prompt = PromptTemplate(template=prompt_template,
                             input_variables=["context", "question"])
 
-    db = app.source_service.load_chroma(config.vector_store_path)
+    source_service = SourceService(config)
+    db = source_service.load_chroma(config.vector_store_path)
     retriever = db.as_retriever()
     retriever.search_kwargs["distance_metric"] = "cos"
     retriever.search_kwargs["fetch_k"] = 50
@@ -98,7 +100,8 @@ def conversation():
             print(f"{doc} \n")
 
 
-def chat():
+def chatglm_chat():
+    app = LangChainApplication(config)
     app.source_service.load_chroma(config.vector_store_path)
     history = []
     search_text = ''
@@ -122,9 +125,50 @@ def chat():
         print(search_text)
 
 
+def chatglm_cpp_chat():
+    source_service = SourceService(config)
+    db = source_service.load_chroma(config.vector_store_path)
+    retriever = db.as_retriever()
+    retriever.search_kwargs["distance_metric"] = "cos"
+    retriever.search_kwargs["fetch_k"] = 50
+    retriever.search_kwargs["maximal_marginal_relevance"] = True
+    retriever.search_kwargs["k"] = 5
+
+    # default endpoint_url for a local deployed ChatGLM api server
+    endpoint_url = "http://127.0.0.1:8000"
+
+    prompt_template = """基于以下已知信息，简洁和专业的来回答用户的问题。
+                        如果无法从中得到答案，请说 "根据已知信息无法回答该问题" 或 "没有提供足够的相关信息"，不允许在答案中添加编造成分，答案请使用中文。
+                        已知内容:
+                        {context}
+                        问题:
+                        {question}"""
+    prompt = PromptTemplate(template=prompt_template,
+                            input_variables=["context", "question"])
+    llm = ChatGLM(
+        endpoint_url=endpoint_url,
+        max_token=10000,
+        top_p=0.8,
+        model_kwargs={"sample_model_args": False},
+    )
+    llm.with_history = True
+
+    qa = ConversationalRetrievalChain.from_llm(llm, retriever=retriever,
+                                               return_source_documents=True,
+                                               combine_docs_chain_kwargs={"prompt": prompt})
+    chat_history = []
+    for question in questions:
+        result = qa({"question": question, "chat_history": chat_history})
+        chat_history.append((question, result["answer"]))
+        print("----------------------------------\n")
+        print(f"**Question**: {question} \n")
+        print(f"**Answer**: {result['answer']} \n")
+        print("**Source**:\n")
+        for doc in result['source_documents']:
+            print(f"{doc} \n")
+
+
 if __name__ == "__main__":
     # ingest()
     # source()
-    chat()
-
-
+    chatglm_cpp_chat()
